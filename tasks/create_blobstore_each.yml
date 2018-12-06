@@ -6,7 +6,9 @@
     group: "{{ nexus_os_group }}"
     state: directory
     recurse: true
-  when: item.path is defined
+  when: 
+    - item.path is defined
+    - nexus_install | bool
 
 - include_tasks: call_script.yml
   vars:
