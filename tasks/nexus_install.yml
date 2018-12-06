@@ -239,7 +239,7 @@
     regexp: "^-XX:MaxDirectMemorySize=.*"
     line: "-XX:MaxDirectMemorySize={{ nexus_max_direct_memory }}"
   notify: nexus-service-stop
-  when: nexus_install | bools
+  when: nexus_install | bool
 
 - name: Create Nexus tmp/backup directory
   file:
