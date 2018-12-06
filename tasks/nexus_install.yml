@@ -392,6 +392,7 @@
     user: 'admin'
     password: "{{ nexus_admin_password }}"
     force_basic_auth: yes
+    validate_certs: "{{ nexus_validate_certs }}"
     status_code: 200, 401
   register: nexus_api_head_with_defined_password
   check_mode: no
@@ -409,6 +410,7 @@
     user: 'admin'
     password: "{{ nexus_default_admin_password }}"
     force_basic_auth: yes
+    validate_certs: "{{ nexus_validate_certs }}"
     status_code: 200, 401
   register: nexus_api_head_with_default_password
   when: nexus_api_head_with_defined_password.status == 401
