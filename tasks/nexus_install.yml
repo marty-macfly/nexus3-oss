@@ -387,7 +387,7 @@
 
 - name: Access scripts API endpoint with defined admin password
   uri:
-    url: "{{ nexus_htttp_schema }}://{{ nexus_default_host }}:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
+    url: "{{ nexus_default_schema }}://{{ nexus_default_host }}:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
     method: 'HEAD'
     user: 'admin'
     password: "{{ nexus_admin_password }}"
@@ -404,7 +404,7 @@
 
 - name: Access scripts API endpoint with default admin password
   uri:
-    url: "{{ nexus_htttp_schema }}://{{ nexus_default_host }}:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
+    url: "{{ nexus_default_schema }}://{{ nexus_default_host }}:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
     method: 'HEAD'
     user: 'admin'
     password: "{{ nexus_default_admin_password }}"
