@@ -23,7 +23,6 @@
     - nexus_install | bool
 
 - import_tasks: nexus_install.yml
-  when: nexus_install | bool
 
 - include_tasks: httpd_reverse_proxy_config.yml
   when: 

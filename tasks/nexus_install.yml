@@ -59,11 +59,13 @@
     force: no
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Ensure Nexus o/s group exists
   group:
     name: "{{ nexus_os_group }}"
     state: present
+  when: nexus_install | bool
 
 - name: Ensure Nexus o/s user exists
   user:
@@ -71,11 +73,13 @@
     group: "{{ nexus_os_group }}"
     shell: "/bin/bash"
     state: present
+  when: nexus_install | bool
 
 - name: Ensure Nexus installation directory exists
   file:
     path: "{{ nexus_installation_dir }}"
     state: "directory"
+  when: nexus_install | bool
 
 - name: Unpack Nexus download
   unarchive:
@@ -86,12 +90,14 @@
     copy: false
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Ensure proper ownership of nexus installation directory
   file:
     path: "{{ nexus_installation_dir }}/nexus-{{ nexus_version }}"
     recurse: yes
     mode: "u=rwX,g=rX,o=rX"
+  when: nexus_install | bool
 
 - name: Update symlink nexus-latest
   file:
@@ -104,6 +110,7 @@
   register: nexus_latest_version
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - meta: flush_handlers
 
@@ -111,6 +118,7 @@
   file:
     path: "{{ nexus_installation_dir }}/nexus-latest/data"
     state: absent
+  when: nexus_install | bool
 
 - name: Get path to default settings
   set_fact:
@@ -180,6 +188,7 @@
     state: "directory"
     owner: "{{ nexus_os_user }}"
     group: "{{ nexus_os_group }}"
+  when: nexus_install | bool
 
 - name: Setup Nexus data directory
   lineinfile:
@@ -188,6 +197,7 @@
     line: "-Dkaraf.data={{ nexus_data_dir }}"
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Setup JVM logfile directory
   lineinfile:
@@ -196,6 +206,7 @@
     line: "-XX:LogFile={{ nexus_data_dir }}/log/jvm.log"
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Setup Nexus default timezone
   lineinfile:
@@ -204,6 +215,7 @@
     line: "-Duser.timezone={{ nexus_timezone }}"
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Setup Nexus JVM min heap size
   lineinfile:
@@ -211,6 +223,7 @@
     regexp: "^-Xms.*"
     line: "-Xms{{ nexus_min_heap_size }}"
   notify: nexus-service-stop
+  when: nexus_install | bool
 
 - name: Setup Nexus JVM max heap size
   lineinfile:
@@ -218,6 +231,7 @@
     regexp: "^-Xmx.*"
     line: "-Xmx{{ nexus_max_heap_size }}"
   notify: nexus-service-stop
+  when: nexus_install | bool
 
 - name: Setup Nexus JVM max direct memory
   lineinfile:
@@ -225,6 +239,7 @@
     regexp: "^-XX:MaxDirectMemorySize=.*"
     line: "-XX:MaxDirectMemorySize={{ nexus_max_direct_memory }}"
   notify: nexus-service-stop
+  when: nexus_install | bools
 
 - name: Create Nexus tmp/backup directory
   file:
@@ -235,6 +250,7 @@
   with_items:
     - "{{ nexus_tmp_dir }}"
     - "{{ nexus_backup_dir }}"
+  when: nexus_install | bool
 
 - name: Setup Nexus tmp directory
   lineinfile:
@@ -243,6 +259,7 @@
     line: "-Djava.io.tmpdir={{ nexus_tmp_dir }}"
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Set NEXUS_HOME for the service user
   lineinfile:
@@ -251,6 +268,7 @@
     line: "export NEXUS_HOME={{ nexus_installation_dir }}/nexus-latest"
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Set nexus user
   lineinfile:
@@ -259,6 +277,7 @@
     line: "run_as_user=\"{{ nexus_os_user }}\""
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Set nexus port
   lineinfile:
@@ -267,6 +286,7 @@
     line: "application-port={{ nexus_default_port }}"
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Set nexus context path
   lineinfile:
@@ -275,13 +295,16 @@
     line: "nexus-context-path={{ nexus_default_context_path }}"
   notify:
     - nexus-service-stop
+  when: nexus_install | bool
 
 - name: Bind nexus service to 127.0.0.1 only
   lineinfile:
     dest: "{{ nexus_default_settings_file }}"
     regexp: "^application-host=.*"
     line: "application-host=127.0.0.1"
-  when: httpd_setup_enable
+  when: 
+    - nexus_install | bool
+    - httpd_setup_enable
   notify:
     - nexus-service-stop
 
@@ -291,6 +314,7 @@
     dest: "/etc/systemd/system"
   notify:
     - systemd-reload
+  when: nexus_install | bool
 
 - block:
     - name: "Deploy backup restore script"
@@ -303,13 +327,16 @@
         src: "{{ nexus_script_dir }}/nexus-blob-restore.sh"
         dest: "/sbin/nexus-blob-restore.sh"
         state: link
-  when: nexus_backup_configure | bool
+  when: 
+    - nexus_install | bool
+    - nexus_backup_configure | bool
 
 - name: 'Check if data directory is empty (first-time install)'
   command: "ls {{ nexus_data_dir }}"
   register: nexus_data_dir_contents
   check_mode: no
   changed_when: false
+  when: nexus_install | bool
 
 - name: Clean cache for upgrade process
   file:
@@ -331,6 +358,7 @@
   notify:
     - wait-for-nexus
     - wait-for-nexus-port
+  when: nexus_install | bool
 
 - meta: flush_handlers
 
@@ -355,10 +383,11 @@
     mode: "0755"
     recurse: false
   with_items: "{{ nexus_app_dir_settings_dirs }}"
+  when: nexus_install | bool
 
 - name: Access scripts API endpoint with defined admin password
   uri:
-    url: "http://localhost:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
+    url: "{{ nexus_htttp_schema }}://{{ nexus_default_host }}:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
     method: 'HEAD'
     user: 'admin'
     password: "{{ nexus_admin_password }}"
@@ -375,7 +404,7 @@
 
 - name: Access scripts API endpoint with default admin password
   uri:
-    url: "http://localhost:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
+    url: "{{ nexus_htttp_schema }}://{{ nexus_default_host }}:{{ nexus_default_port }}{{ nexus_default_context_path }}{{ nexus_rest_api_endpoint }}"
     method: 'HEAD'
     user: 'admin'
     password: "{{ nexus_default_admin_password }}"
@@ -415,6 +444,7 @@
   with_items:
     - "{{ nexus_data_dir }}/groovy-raw-scripts/current"
     - "{{ nexus_data_dir }}/groovy-raw-scripts/new"
+  when: nexus_install | bool
 
 - name: Archive scripts
   become: no
@@ -423,11 +453,13 @@
     path: "{{ role_path }}/files/groovy/*"
     dest: "/tmp/nexus-upload-groovy-scripts.tar.gz"
   run_once: true
+  when: nexus_install | bool
 
 - name: Upload new scripts
   unarchive:
     src: "/tmp/nexus-upload-groovy-scripts.tar.gz"
     dest: "{{ nexus_data_dir }}/groovy-raw-scripts/new/"
+  when: nexus_install | bool
 
 - name: Sync new scripts to old and get differences
   shell: 'rsync -ric {{ nexus_data_dir }}/groovy-raw-scripts/new/ {{ nexus_data_dir }}/groovy-raw-scripts/current/ | cut -d" " -f 2 | sed "s/\.groovy//g"'
@@ -438,6 +470,7 @@
   # skip ansible lint (we don't want to use synchronize module for this)
   args:
     warn: false
+  when: nexus_install | bool
 
 - name: Declare new or changed groovy scripts in nexus
   include_tasks: declare_script_each.yml
