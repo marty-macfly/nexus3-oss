@@ -65,7 +65,6 @@
   group:
     name: "{{ nexus_os_group }}"
     state: present
-  when: nexus_install | bool
 
 - name: Ensure Nexus o/s user exists
   user:
@@ -73,7 +72,6 @@
     group: "{{ nexus_os_group }}"
     shell: "/bin/bash"
     state: present
-  when: nexus_install | bool
 
 - name: Ensure Nexus installation directory exists
   file:
@@ -188,7 +186,6 @@
     state: "directory"
     owner: "{{ nexus_os_user }}"
     group: "{{ nexus_os_group }}"
-  when: nexus_install | bool
 
 - name: Setup Nexus data directory
   lineinfile:
@@ -446,7 +443,6 @@
   with_items:
     - "{{ nexus_data_dir }}/groovy-raw-scripts/current"
     - "{{ nexus_data_dir }}/groovy-raw-scripts/new"
-  when: nexus_install | bool
 
 - name: Archive scripts
   become: no
@@ -455,13 +451,11 @@
     path: "{{ role_path }}/files/groovy/*"
     dest: "/tmp/nexus-upload-groovy-scripts.tar.gz"
   run_once: true
-  when: nexus_install | bool
 
 - name: Upload new scripts
   unarchive:
     src: "/tmp/nexus-upload-groovy-scripts.tar.gz"
     dest: "{{ nexus_data_dir }}/groovy-raw-scripts/new/"
-  when: nexus_install | bool
 
 - name: Sync new scripts to old and get differences
   shell: 'rsync -ric {{ nexus_data_dir }}/groovy-raw-scripts/new/ {{ nexus_data_dir }}/groovy-raw-scripts/current/ | cut -d" " -f 2 | sed "s/\.groovy//g"'
@@ -472,7 +466,6 @@
   # skip ansible lint (we don't want to use synchronize module for this)
   args:
     warn: false
-  when: nexus_install | bool
 
 - name: Declare new or changed groovy scripts in nexus
   include_tasks: declare_script_each.yml
