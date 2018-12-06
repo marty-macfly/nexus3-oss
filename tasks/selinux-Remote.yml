@@ -1,0 +1,5 @@
+---
+
+- name: Make sure we have the necessary yum packages available for selinux
+  debug:
+    msg: "Remote system doesn't need SELinux"
